@@ -1,0 +1,179 @@
+!pip install -q requests pandas
+
+import requests
+import pandas as pd
+from datetime import date, timedelta
+
+# ==============================
+# 0. 填你的 Flickr API key
+# ==============================
+API_KEY    = "YOUR_FLICKR_API_KEY_HERE"   # ← 换成你自己的
+API_SECRET = ""  # 用不到可以留空
+
+
+# ==============================
+# 1. Western Easter + Carnival range（跟你之前一样）
+# ==============================
+def western_easter(year: int) -> date:
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19*a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l = (32 + 2*e + 2*i - h - k) % 7
+    m = (a + 11*h + 22*l) // 451
+    month = (h + l - 7*m + 114) // 31
+    day = ((h + l - 7*m + 114) % 31) + 1
+    return date(year, month, day)
+
+def carnival_range(year: int):
+    """
+    返回这一年嘉年华的大致时间段（和你之前的逻辑完全一致）
+    """
+    easter = western_easter(year)
+    ash_wednesday = easter - timedelta(days=46)
+    shrove_tuesday = ash_wednesday - timedelta(days=1)
+    start = shrove_tuesday - timedelta(days=17)
+    return start, shrove_tuesday
+
+
+# ==============================
+# 2. 通用函数：抓某个 bbox 内，若干年的嘉年华照片
+# ==============================
+def fetch_flickr_carnival_area(
+    area_name: str,
+    bbox: str,
+    years,
+    api_key: str,
+    text: str = "carnival venice",
+    max_pages: int = 10,   # 想多抓就调大；如果快超限可以调小
+    per_page: int = 250,
+) -> pd.DataFrame:
+
+    base_url = "https://api.flickr.com/services/rest/"
+
+    all_photos = []
+
+    for year in years:
+        start_date, end_date = carnival_range(year)
+        min_taken = start_date.strftime("%Y-%m-%d")
+        max_taken = (end_date + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        print(f"[{area_name}] Fetching {year}  {min_taken} ~ {max_taken}")
+
+        params = {
+            "method": "flickr.photos.search",
+            "api_key": api_key,
+            "format": "json",
+            "nojsoncallback": 1,
+            "bbox": bbox,          # 关键：只在这个 bbox 范围抓
+            "has_geo": 1,
+            "text": text,
+            "per_page": per_page,
+            "page": 1,
+            "extras": "geo,date_taken,date_upload,owner_name,views,tags,url_m,url_o",
+            "min_taken_date": min_taken,
+            "max_taken_date": max_taken,
+            "content_type": 1,
+            "safe_search": 1,
+        }
+
+        for page in range(1, max_pages + 1):
+            params["page"] = page
+            r = requests.get(base_url, params=params, timeout=30)
+            data = r.json()
+
+            photos = data.get("photos", {}).get("photo", [])
+            if not photos:
+                break
+
+            for p in photos:
+                p["year"] = year
+                p["area"] = area_name
+                all_photos.append(p)
+
+            total_pages = data.get("photos", {}).get("pages", page)
+            if page >= total_pages:
+                break
+
+    if not all_photos:
+        print(f"[{area_name}] No photos found.")
+        return pd.DataFrame()
+
+    df = pd.DataFrame(all_photos)
+
+    keep_cols = [
+        "id", "owner", "ownername", "title",
+        "datetaken", "dateupload",
+        "latitude", "longitude",
+        "views", "tags", "url_m", "url_o",
+        "year", "area",
+    ]
+    for c in keep_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    df = df[keep_cols].copy()
+
+    # 经纬度转 float，去掉 0 / 缺失
+    df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+    df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
+    df = df.dropna(subset=["latitude", "longitude"])
+    df = df[(df["latitude"] != 0) & (df["longitude"] != 0)]
+
+    print(f"[{area_name}] Total photos with geo:", len(df))
+    return df
+
+
+# ==============================
+# 3. 定义年份 & 两个区域的 bbox
+#    注意 Flickr bbox 顺序：min_lon,min_lat,max_lon,max_lat
+# ==============================
+YEARS = list(range(2008, 2025 + 1))  # 2008–2025 嘉年华时期
+
+# 圣马可广场附近（小范围，比较干净）
+BBOX_SANMARCO = "12.3365,45.4330,12.3405,45.4350"
+
+# 大运河走廊（中段 + 上下稍微放宽一点）
+BBOX_GRAND_CANAL = "12.3230,45.4300,12.3450,45.4440"
+
+
+# ==============================
+# 4. 分别抓取两个区域
+# ==============================
+df_sanmarco = fetch_flickr_carnival_area(
+    area_name="San Marco square",
+    bbox=BBOX_SANMARCO,
+    years=YEARS,
+    api_key=API_KEY,
+)
+
+df_grandcanal = fetch_flickr_carnival_area(
+    area_name="Grand Canal corridor",
+    bbox=BBOX_GRAND_CANAL,
+    years=YEARS,
+    api_key=API_KEY,
+)
+
+# ==============================
+# 5. 保存 CSV + 打印数量统计
+# ==============================
+if not df_sanmarco.empty:
+    df_sanmarco.to_csv("flickr_carnival_sanmarco_2008_2025.csv", index=False)
+
+if not df_grandcanal.empty:
+    df_grandcanal.to_csv("flickr_carnival_grandcanal_2008_2025.csv", index=False)
+
+print("\n=== Summary ===")
+print("San Marco photos:", len(df_sanmarco))
+print("Grand Canal photos:", len(df_grandcanal))
+
+df_all = pd.concat([df_sanmarco, df_grandcanal], ignore_index=True)
+df_all.to_csv("flickr_carnival_sanmarco_grandcanal_2008_2025_all.csv", index=False)
+print("Combined CSV saved: flickr_carnival_sanmarco_grandcanal_2008_2025_all.csv")
+df_all.head()

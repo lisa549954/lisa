@@ -1,0 +1,256 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import time
+import re
+from urllib.parse import urljoin
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+}
+
+# =========================
+# 1. 抓取 live.comune.venezia.it 新站文章链接
+# =========================
+def get_live_article_links(max_pages=30, sleep_sec=1):
+    """
+    从 live.comune.venezia.it 抓文章链接
+    可按 topic page 分页抓取
+    """
+    base = "https://live.comune.venezia.it/it"
+    links = set()
+
+    for page in range(max_pages):
+        # 这个 page 参数在站内主题页可用，普通首页不一定分页稳定
+        url = f"{base}?page={page}"
+        print(f"[LIVE] Scanning page: {url}")
+
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  Failed: {e}")
+            continue
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        # 找所有 a 标签，筛出文章路径
+        page_links = 0
+        for a in soup.find_all("a", href=True):
+            href = a["href"].strip()
+
+            full_url = urljoin(base, href)
+
+            # 新站文章 URL 常见格式：
+            # /it/2026/03/xxxxx
+            # /index.php/it/2026/03/xxxxx
+            if re.search(r"/(index\.php/)?it/\d{4}/\d{2}/", full_url):
+                links.add(full_url)
+                page_links += 1
+
+        print(f"  Found article-like links: {page_links}")
+        time.sleep(sleep_sec)
+
+    return sorted(links)
+
+
+# =========================
+# 2. 解析 live.comune.venezia.it 文章页
+# =========================
+def parse_live_article(url, sleep_sec=0.5):
+    print(f"[LIVE] Parsing: {url}")
+
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=20)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"  Failed: {e}")
+        return None
+
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    text = soup.get_text("\n", strip=True)
+
+    # 标题：站内文章一般在内容区域中单独出现一次，可优先用 h1 / h2 / og:title
+    title = None
+    og_title = soup.find("meta", attrs={"property": "og:title"})
+    if og_title and og_title.get("content"):
+        title = og_title["content"].strip()
+
+    if not title:
+        h1 = soup.find("h1")
+        if h1:
+            title = h1.get_text(" ", strip=True)
+
+    if not title:
+        h2 = soup.find("h2")
+        if h2:
+            title = h2.get_text(" ", strip=True)
+
+    # 日期抓取：文章页常见格式 “Gio, 26/03/2026 - 15:47”
+    date_match = re.search(r"\b\d{2}/\d{2}/\d{4}\s*-\s*\d{2}:\d{2}\b", text)
+    pub_date = date_match.group(0) if date_match else None
+
+    # 分类：常出现在标题上方或正文附近
+    categories = []
+    possible_tags = [
+        "Turismo", "Cultura", "Ambiente", "Scuola", "Sport", "Cinema",
+        "Teatro", "Musica", "Commercio", "Urbanistica", "Salute",
+        "Casa", "Biblioteche", "Sindaco"
+    ]
+    for tag in possible_tags:
+        if re.search(rf"\b{re.escape(tag)}\b", text):
+            categories.append(tag)
+
+    # 正文：粗略抽取，从日期之后到“Articoli correlati”之前
+    body = None
+    if pub_date and pub_date in text:
+        parts = text.split(pub_date, 1)
+        if len(parts) > 1:
+            body = parts[1]
+            body = body.split("Articoli correlati")[0]
+            body = body.strip()
+
+    if not body:
+        body = text[:5000]
+
+    time.sleep(sleep_sec)
+
+    return {
+        "source": "live.comune.venezia.it",
+        "url": url,
+        "title": title,
+        "pub_date": pub_date,
+        "categories": ", ".join(sorted(set(categories))) if categories else None,
+        "body": body
+    }
+
+
+# =========================
+# 3. 抓取旧站新闻稿列表
+# =========================
+def get_old_press_links(start_values=None, sleep_sec=1):
+    """
+    旧站列表页示例：
+    https://www2.comune.venezia.it/salastampa/comunicati/comunicatilist.asp?start=3809
+
+    start 参数像偏移量，旧站很老，分页规则不算现代化。
+    这里给一个可扩展版本：你可以自己加更多 start 值。
+    """
+    if start_values is None:
+        start_values = [0, 100, 500, 1000, 2000, 3000, 3809]
+
+    base = "https://www2.comune.venezia.it/salastampa/comunicati/"
+    links = set()
+
+    for start in start_values:
+        url = f"{base}comunicatilist.asp?start={start}"
+        print(f"[OLD] Scanning list: {url}")
+
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+            r.raise_for_status()
+        except Exception as e:
+            print(f"  Failed: {e}")
+            continue
+
+        soup = BeautifulSoup(r.text, "html.parser")
+
+        found = 0
+        for a in soup.find_all("a", href=True):
+            href = a["href"].strip()
+            full_url = urljoin(base, href)
+
+            if "comunicatiview.asp?key=" in full_url:
+                links.add(full_url)
+                found += 1
+
+        print(f"  Found old press links: {found}")
+        time.sleep(sleep_sec)
+
+    return sorted(links)
+
+
+# =========================
+# 4. 解析旧站新闻稿正文
+# =========================
+def parse_old_press_article(url, sleep_sec=0.5):
+    print(f"[OLD] Parsing: {url}")
+
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=20)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"  Failed: {e}")
+        return None
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    text = soup.get_text("\n", strip=True)
+
+    # 标题：优先 title
+    title = soup.title.get_text(" ", strip=True) if soup.title else None
+
+    # 旧站日期常见格式：18/09/2006
+    date_match = re.search(r"\b\d{2}/\d{2}/\d{4}\b", text)
+    pub_date = date_match.group(0) if date_match else None
+
+    body = text
+    if pub_date and pub_date in text:
+        parts = text.split(pub_date, 1)
+        if len(parts) > 1:
+            body = parts[1].strip()
+
+    time.sleep(sleep_sec)
+
+    return {
+        "source": "www2.comune.venezia.it/salastampa",
+        "url": url,
+        "title": title,
+        "pub_date": pub_date,
+        "categories": None,
+        "body": body[:8000]
+    }
+
+
+# =========================
+# 5. 主程序
+# =========================
+if __name__ == "__main__":
+    # ---------- 新站 ----------
+    live_links = get_live_article_links(max_pages=10, sleep_sec=1)
+    print(f"\nTotal live links found: {len(live_links)}")
+
+    live_rows = []
+    for i, link in enumerate(live_links[:50], 1):   # 先抓前 50 篇测试
+        print(f"\n[LIVE {i}/{min(len(live_links), 50)}]")
+        row = parse_live_article(link)
+        if row:
+            live_rows.append(row)
+
+    df_live = pd.DataFrame(live_rows)
+    df_live.to_csv("venice_official_live_news.csv", index=False, encoding="utf-8-sig")
+    print("Saved: venice_official_live_news.csv")
+
+    # ---------- 旧站 ----------
+    old_links = get_old_press_links(
+        start_values=[0, 100, 500, 1000, 2000, 3000, 3809],
+        sleep_sec=1
+    )
+    print(f"\nTotal old press links found: {len(old_links)}")
+
+    old_rows = []
+    for i, link in enumerate(old_links[:50], 1):   # 先抓前 50 篇测试
+        print(f"\n[OLD {i}/{min(len(old_links), 50)}]")
+        row = parse_old_press_article(link)
+        if row:
+            old_rows.append(row)
+
+    df_old = pd.DataFrame(old_rows)
+    df_old.to_csv("venice_official_old_press.csv", index=False, encoding="utf-8-sig")
+    print("Saved: venice_official_old_press.csv")
+
+    # ---------- 合并 ----------
+    df_all = pd.concat([df_live, df_old], ignore_index=True)
+    df_all.to_csv("venice_official_all_news.csv", index=False, encoding="utf-8-sig")
+    print("Saved: venice_official_all_news.csv")

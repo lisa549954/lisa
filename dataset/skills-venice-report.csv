@@ -1,0 +1,327 @@
+Source,Dest,Value,Step from,Step to
+Art Biennale,creative_expression,1,0,1
+Carnival,creative_expression,2,0,1
+Marathon,creative_expression,1,0,1
+Open Studio Venice,creative_expression,1,0,1
+Photography Exhibition,creative_expression,1,0,1
+Venice Artist Residencies,creative_expression,1,0,1
+Architecture Biennale,heritage,25,0,1
+Art Biennale,heritage,10,0,1
+Carnival,heritage,8,0,1
+Marathon,heritage,6,0,1
+Open Arsenale,heritage,1,0,1
+Open Studio Venice,heritage,15,0,1
+Photography Exhibition,heritage,6,0,1
+Rialto Market Events,heritage,10,0,1
+Venice Artist Residencies,heritage,6,0,1
+Venice Fashion Week,heritage,6,0,1
+Venice Glass Week,heritage,11,0,1
+Regata Storica,heritage,1,0,1
+Blessing of the Gondolas,heritage,1,0,1
+Feast of St. George,ritual,1,0,1
+Blessing of the Gondolas,ritual,1,0,1
+Architecture Biennale,ritual,9,0,1
+Art Biennale,ritual,3,0,1
+Biennale Danza,ritual,1,0,1
+Carnival,ritual,2,0,1
+Fondazione Venezia,ritual,1,0,1
+Marathon,ritual,10,0,1
+Open Studio Venice,ritual,12,0,1
+Photography Exhibition,ritual,5,0,1
+Rialto Market Events,ritual,6,0,1
+Venice Artist Residencies,ritual,16,0,1
+Venice Fashion Week,ritual,6,0,1
+Venice Glass Week,ritual,5,0,1
+Festa del Redentore,ritual,1,0,1
+Biennale Teatro,performance,1,0,1
+Architecture Biennale,performance,4,0,1
+Art Biennale,performance,7,0,1
+Carnival,performance,2,0,1
+Marathon,performance,7,0,1
+Open Arsenale,performance,5,0,1
+Open Studio Venice,performance,10,0,1
+Photography Exhibition,performance,5,0,1
+Rialto Market Events,performance,3,0,1
+Venice Artist Residencies,performance,10,0,1
+Venice Fashion Week,performance,7,0,1
+Venice Glass Week,performance,5,0,1
+Architecture Biennale,identity,8,0,1
+Art Biennale,identity,4,0,1
+Carnival,identity,3,0,1
+Marathon,identity,1,0,1
+Open Studio Venice,identity,7,0,1
+Photography Exhibition,identity,3,0,1
+Rialto Market Events,identity,2,0,1
+Venice Artist Residencies,identity,3,0,1
+Venice Fashion Week,identity,3,0,1
+Venice Glass Week,identity,7,0,1
+Feast of St. George,identity,1,0,1
+Festa della Sensa,tradition,1,0,1
+Architecture Biennale,tradition,13,0,1
+Art Biennale,tradition,5,0,1
+Biennale Musica,tradition,1,0,1
+Carnival,tradition,2,0,1
+Fondazione Venezia,tradition,1,0,1
+Jewish Venice Festival,tradition,23,0,1
+Marathon,tradition,3,0,1
+Open Studio Venice,tradition,15,0,1
+Photography Exhibition,tradition,6,0,1
+Rialto Market Events,tradition,4,0,1
+Venice Artist Residencies,tradition,3,0,1
+Venice Fashion Week,tradition,9,0,1
+Venice Glass Week,tradition,8,0,1
+Acqua Alta Cultural Practices,tradition,1,0,1
+Biennale Teatro,representation,1,0,1
+Architecture Biennale,representation,17,0,1
+Art Biennale,representation,13,0,1
+Carnival,representation,10,0,1
+Marathon,representation,3,0,1
+Open Studio Venice,representation,6,0,1
+Photography Exhibition,representation,5,0,1
+Rialto Market Events,representation,2,0,1
+Venice Artist Residencies,representation,6,0,1
+Venice Fashion Week,representation,5,0,1
+Venice Glass Week,representation,11,0,1
+Architecture Biennale,symbolism,17,0,1
+Art Biennale,symbolism,5,0,1
+Biennale Musica,symbolism,1,0,1
+Biennale Teatro,symbolism,3,0,1
+Carnival,symbolism,5,0,1
+Marathon,symbolism,10,0,1
+Open Arsenale,symbolism,5,0,1
+Open Studio Venice,symbolism,7,0,1
+Photography Exhibition,symbolism,3,0,1
+Rialto Market Events,symbolism,3,0,1
+Venice Artist Residencies,symbolism,16,0,1
+Venice Fashion Week,symbolism,15,0,1
+Venice Glass Week,symbolism,10,0,1
+Architecture Biennale,cultural_participation,1,0,1
+Venice Glass Week,cultural_participation,1,0,1
+Architecture Biennale,spectatorship,1,0,1
+Art Biennale,spectatorship,5,0,1
+Biennale Danza,spectatorship,1,0,1
+Marathon,spectatorship,4,0,1
+Open Arsenale,spectatorship,1,0,1
+Open Studio Venice,spectatorship,8,0,1
+Photography Exhibition,spectatorship,2,0,1
+Rialto Market Events,spectatorship,4,0,1
+Venice Artist Residencies,spectatorship,3,0,1
+Venice Fashion Week,spectatorship,7,0,1
+Venice Glass Week,spectatorship,3,0,1
+Christmas in Venice,spectatorship,1,0,1
+Open Studio Venice,carnivalization,1,0,1
+Art Biennale,authenticity,1,0,1
+Open Studio Venice,authenticity,6,0,1
+Photography Exhibition,authenticity,1,0,1
+Rialto Market Events,authenticity,6,0,1
+Venice Fashion Week,authenticity,3,0,1
+Venice Glass Week,authenticity,1,0,1
+Venice Food Festival ,authenticity,1,0,1
+Venice Food Festival ,tourism,1,0,1
+Christmas in Venice,tourism,1,0,1
+Architecture Biennale,tourism,2,0,1
+Art Biennale,tourism,2,0,1
+Carnival,tourism,2,0,1
+Marathon,tourism,3,0,1
+Open Arsenale,tourism,1,0,1
+Open Studio Venice,tourism,6,0,1
+Photography Exhibition,tourism,1,0,1
+Rialto Market Events,tourism,3,0,1
+Venice Artist Residencies,tourism,1,0,1
+Venice Fashion Week,tourism,1,0,1
+Venice Glass Week,tourism,3,0,1
+Photography Exhibition,global_brands,1,0,1
+Rialto Market Events,global_brands,4,0,1
+Venice Glass Week,global_brands,2,0,1
+Architecture Biennale,consumption,5,0,1
+Art Biennale,consumption,1,0,1
+Carnival,consumption,1,0,1
+Marathon,consumption,2,0,1
+Open Studio Venice,consumption,11,0,1
+Photography Exhibition,consumption,2,0,1
+Rialto Market Events,consumption,1,0,1
+Venice Artist Residencies,consumption,5,0,1
+Venice Fashion Week,consumption,4,0,1
+Venice Glass Week,consumption,3,0,1
+Venice Food Festival,local_business,1,0,1
+Biennale Danza,local_business,1,0,1
+Carnival,local_business,1,0,1
+Open Studio Venice,local_business,5,0,1
+Venice Glass Week,local_business,1,0,1
+Open Studio Venice,community_economy,2,0,1
+Architecture Biennale,commercialization,1,0,1
+Art Biennale,commercialization,1,0,1
+Art Biennale,creative_industry,2,0,1
+Carnival,creative_industry,2,0,1
+Open Studio Venice,creative_industry,3,0,1
+Photography Exhibition,creative_industry,1,0,1
+Venice Fashion Week,creative_industry,1,0,1
+Venice Glass Week,creative_industry,2,0,1
+Architecture Biennale,urban_regeneration,3,0,1
+Carnival,urban_regeneration,1,0,1
+Venice Fashion Week,urban_regeneration,1,0,1
+Architecture Biennale,infrastructure,6,0,1
+Art Biennale,infrastructure,1,0,1
+Carnival,infrastructure,1,0,1
+Marathon,infrastructure,2,0,1
+Open Studio Venice,infrastructure,2,0,1
+Rialto Market Events,infrastructure,1,0,1
+Venice Artist Residencies,infrastructure,2,0,1
+Venice Fashion Week,infrastructure,2,0,1
+Venice Glass Week,infrastructure,3,0,1
+MOSE Open Day,infrastructure,1,0,1
+Architecture Biennale,lagoon,3,0,1
+Art Biennale,lagoon,3,0,1
+Carnival,lagoon,2,0,1
+Fondazione Venezia,lagoon,1,0,1
+Marathon,lagoon,1,0,1
+Open Studio Venice,lagoon,2,0,1
+Rialto Market Events,lagoon,1,0,1
+Venice Artist Residencies,lagoon,1,0,1
+Venice Fashion Week,lagoon,3,0,1
+Venice Glass Week,lagoon,1,0,1
+Festa del Redentore,lagoon,1,0,1
+Festa della Sensa,lagoon,1,0,1
+Vogalonga,lagoon,1,0,1
+Giants of the Lagoon,lagoon,1,0,1
+Regata Storica,lagoon,1,0,1
+MOSE Open Day,flooding,1,0,1
+Architecture Biennale,flooding,3,0,1
+Art Biennale,flooding,2,0,1
+Carnival,flooding,2,0,1
+Venice Artist Residencies,flooding,2,0,1
+Venice Fashion Week,flooding,1,0,1
+Architecture Biennale,climate,8,0,1
+Art Biennale,climate,1,0,1
+Carnival,climate,2,0,1
+Open Arsenale,climate,2,0,1
+Venice Artist Residencies,climate,1,0,1
+Venice Glass Week,climate,1,0,1
+Acqua Alta Cultural Practices,climate,1,0,1
+MOSE Open Day,adaptation,1,0,1
+Architecture Biennale,adaptation,3,0,1
+Open Studio Venice,adaptation,3,0,1
+Photography Exhibition,adaptation,1,0,1
+Rialto Market Events,adaptation,1,0,1
+Venice Artist Residencies,adaptation,1,0,1
+Venice Fashion Week,adaptation,4,0,1
+Venice Glass Week,adaptation,1,0,1
+Giants of the Lagoon,adaptation,1,0,1
+Architecture Biennale,landscape,12,0,1
+Art Biennale,landscape,3,0,1
+Biennale Musica,landscape,1,0,1
+Carnival,landscape,4,0,1
+Marathon,landscape,3,0,1
+Open Arsenale,landscape,2,0,1
+Open Studio Venice,landscape,6,0,1
+Photography Exhibition,landscape,5,0,1
+Rialto Market Events,landscape,2,0,1
+Venice Artist Residencies,landscape,3,0,1
+Venice Fashion Week,landscape,4,0,1
+Venice Glass Week,landscape,4,0,1
+Architecture Biennale,canal_network,3,0,1
+Art Biennale,canal_network,6,0,1
+Carnival,canal_network,3,0,1
+Jewish Venice Festival,canal_network,17,0,1
+Marathon,canal_network,4,0,1
+Open Arsenale,canal_network,1,0,1
+Open Studio Venice,canal_network,2,0,1
+Photography Exhibition,canal_network,2,0,1
+Rialto Market Events,canal_network,1,0,1
+Venice Artist Residencies,canal_network,8,0,1
+Venice Fashion Week,canal_network,3,0,1
+Venice Glass Week,canal_network,1,0,1
+Blessing of the Gondolas,canal_network,1,0,1
+Architecture Biennale,sustainability,11,0,1
+Art Biennale,sustainability,2,0,1
+Carnival,sustainability,2,0,1
+Marathon,sustainability,1,0,1
+Photography Exhibition,sustainability,2,0,1
+Rialto Market Events,sustainability,1,0,1
+Venice Artist Residencies,sustainability,1,0,1
+Venice Fashion Week,sustainability,6,0,1
+Venice Glass Week,sustainability,2,0,1
+Vogalonga,resilience,1,0,1
+Giants of the Lagoon,resilience,1,0,1
+Architecture Biennale,resilience,4,0,1
+Art Biennale,resilience,2,0,1
+Photography Exhibition,resilience,2,0,1
+Rialto Market Events,resilience,1,0,1
+Venice Artist Residencies,resilience,3,0,1
+Venice Fashion Week,resilience,2,0,1
+Venice Glass Week,resilience,1,0,1
+Vogalonga,public_space_ownership,1,0,1
+Architecture Biennale,public_space_ownership,4,0,1
+Carnival,public_space_ownership,1,0,1
+Open Arsenale,public_space_ownership,1,0,1
+Open Studio Venice,public_space_ownership,1,0,1
+Venice Fashion Week,public_space_ownership,7,0,1
+Venice Glass Week,public_space_ownership,1,0,1
+Festa del Redentore,public_space_ownership,1,0,1
+Open Studio Venice,immigration,6,0,1
+Rialto Market Events,immigration,1,0,1
+Venice Artist Residencies,immigration,1,0,1
+Venice Glass Week,immigration,3,0,1
+Festa della Sensa,civic_identity,1,0,1
+Art Biennale,civic_identity,2,0,1
+Carnival,civic_identity,1,0,1
+Open Studio Venice,civic_identity,1,0,1
+Venice Artist Residencies,civic_identity,1,0,1
+Venice Fashion Week,civic_identity,1,0,1
+Venice Glass Week,civic_identity,1,0,1
+Feast of St. George,civic_identity,1,0,1
+Architecture Biennale,governance,1,0,1
+Carnival,governance,1,0,1
+Open Studio Venice,governance,4,0,1
+Rialto Market Events,governance,1,0,1
+Venice Artist Residencies,governance,2,0,1
+Venice Fashion Week,governance,1,0,1
+Venice Glass Week,governance,1,0,1
+MOSE Open Day,governance,1,0,1
+Architecture Biennale,community_displacement,2,0,1
+Art Biennale,community_displacement,1,0,1
+Carnival,community_displacement,3,0,1
+Venice Artist Residencies,community_displacement,1,0,1
+Art Biennale,cultural_conflict,2,0,1
+Carnival,cultural_conflict,1,0,1
+Open Studio Venice,cultural_conflict,1,0,1
+Photography Exhibition,cultural_conflict,1,0,1
+Rialto Market Events,cultural_conflict,1,0,1
+Venice Artist Residencies,cultural_conflict,1,0,1
+Venice Fashion Week,cultural_conflict,1,0,1
+Venice Glass Week,cultural_conflict,1,0,1
+creative_expression,culture,8,1,2
+heritage,culture,92,1,2
+ritual,culture,96,1,2
+performance,culture,83,1,2
+identity,culture,48,1,2
+tradition,culture,111,1,2
+representation,culture,100,1,2
+symbolism,culture,120,1,2
+cultural_participation,culture,4,1,2
+spectatorship,culture,53,1,2
+carnivalization,culture,1,1,2
+authenticity,culture,22,1,2
+tourism,economy,35,1,2
+global_brands,economy,9,1,2
+consumption,economy,42,1,2
+local_business,economy,13,1,2
+community_economy,economy,2,1,2
+commercialization,economy,3,1,2
+creative_industry,economy,12,1,2
+urban_regeneration,economy,7,1,2
+infrastructure,economy,17,1,2
+lagoon,environment,30,1,2
+flooding,environment,14,1,2
+climate,environment,20,1,2
+adaptation,environment,19,1,2
+landscape,environment,61,1,2
+canal_network,environment,60,1,2
+sustainability,environment,35,1,2
+resilience,environment,21,1,2
+public_space_ownership,politics,18,1,2
+immigration,politics,12,1,2
+civic_identity,politics,12,1,2
+governance,politics,15,1,2
+community_displacement,politics,9,1,2
+cultural_conflict,politics,14,1,2

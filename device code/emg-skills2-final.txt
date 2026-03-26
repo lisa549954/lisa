@@ -1,0 +1,99 @@
+/*
+  EMG One-Line Output (0~255)
+  Board: Arduino UNO R4 WiFi
+  Wiring: S(white)->A0, V(red)->5V, G(black)->GND
+
+  Usage:
+  - Upload
+  - Open Tools -> Serial Plotter
+  - Baud: 115200
+  - Keep relaxed for first ~1.5s (auto calibration)
+*/
+
+#define EMG_PIN A0
+
+// Sampling
+const uint32_t SAMPLE_US = 2000;   // 2ms = 500Hz
+const uint32_t CAL_MS    = 1500;   // calibration time (keep relaxed)
+
+// Filters
+const float HPF_ALPHA   = 0.98f;   // high-pass: remove slow drift
+const float ENV_ALPHA   = 0.93f;   // envelope smoothing
+
+// Adaptive normalization
+const float FLOOR_ALPHA = 0.995f;  // resting floor adapts slowly
+const float PEAK_DECAY  = 0.999f;  // peak holds then slowly decays
+
+#if defined(ARDUINO_ARCH_RENESAS)  // UNO R4
+const int ADC_MAX = 4095;
+#else
+const int ADC_MAX = 1023;
+#endif
+
+// States
+float baseline = ADC_MAX * 0.5f;   // auto calibrated baseline
+float hpf_y = 0.0f;
+float hpf_x_prev = 0.0f;
+float env = 0.0f;
+
+float floorEnv = 50.0f;            // resting noise level (envelope floor)
+float peakEnv  = 300.0f;           // recent peak level for scaling
+
+uint32_t t0_ms;
+uint32_t next_us;
+
+void setup() {
+  Serial.begin(115200);
+
+#if defined(ARDUINO_ARCH_RENESAS)
+  analogReadResolution(12);        // 0~4095
+#endif
+
+  t0_ms = millis();
+  next_us = micros();
+}
+
+void loop() {
+  // fixed-rate sampling
+  uint32_t now = micros();
+  if ((int32_t)(now - next_us) < 0) return;
+  next_us += SAMPLE_US;
+
+  int raw = analogRead(EMG_PIN);
+
+  // 1) auto baseline calibration (first CAL_MS)
+  if (millis() - t0_ms < CAL_MS) {
+    baseline = 0.99f * baseline + 0.01f * raw;
+    Serial.println(0);  // keep plot simple during calibration
+    return;
+  }
+
+  // 2) high-pass around baseline
+  float x = (float)raw - baseline;
+  hpf_y = HPF_ALPHA * (hpf_y + x - hpf_x_prev);
+  hpf_x_prev = x;
+
+  // 3) rectify + envelope
+  float rect = fabs(hpf_y);
+  env = ENV_ALPHA * env + (1.0f - ENV_ALPHA) * rect;
+
+  // 4) adaptive floor (resting noise)
+  if (env < floorEnv * 1.5f) {
+    floorEnv = FLOOR_ALPHA * floorEnv + (1.0f - FLOOR_ALPHA) * env;
+  }
+
+  // 5) adaptive peak (for normalization)
+  if (env > peakEnv) peakEnv = env;
+  else peakEnv *= PEAK_DECAY;
+
+  if (peakEnv < floorEnv + 30.0f) peakEnv = floorEnv + 30.0f;
+
+  // 6) normalize to 0~255
+  float norm = (env - floorEnv) / (peakEnv - floorEnv);
+  int level = (int)(norm * 255.0f);
+  if (level < 0) level = 0;
+  if (level > 255) level = 255;
+
+  // ✅ only output ONE line
+  Serial.println(level);
+}
