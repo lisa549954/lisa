@@ -1,0 +1,125 @@
+/*
+  Face EMG (speech) - One line output 0..5000 with noise suppression
+  Board: Arduino UNO R4 WiFi
+  Input: EMG analog -> A0
+
+  Output: single integer 0..5000 (good for visualisation / mapping)
+  Notes:
+  - First CAL_MS: keep relaxed & quiet for baseline/noise calibration
+  - Designed for public-space usage: motion & cable noise suppression
+*/
+
+#define EMG_PIN A0
+
+// -------- Sampling --------
+const uint32_t SAMPLE_US = 2000;   // 2ms = 500Hz
+const uint32_t CAL_MS    = 2000;   // 2s calibration (try not to speak)
+
+// -------- Filters (tuned for face / speech) --------
+// Stronger high-pass helps remove slow drift + motion artifacts on face
+const float HPF_ALPHA   = 0.995f;  // 0.99~0.998 (higher = stronger HPF)
+const float ENV_ALPHA   = 0.975f;  // 0.95~0.99  (higher = smoother envelope)
+
+// Adaptive floor/peak (keeps output stable across people/placement)
+const float FLOOR_ALPHA = 0.995f;  // slow tracking of resting noise
+const float PEAK_DECAY  = 0.9992f; // peak holds then slowly decays
+
+// Noise gate (suppresses tiny jitter at rest)
+const int GATE_0_5000   = 80;      // raise if too jittery; lower if too insensitive
+
+#if defined(ARDUINO_ARCH_RENESAS)  // UNO R4
+const int ADC_MAX = 4095;
+#else
+const int ADC_MAX = 1023;
+#endif
+
+// -------- State --------
+float baseline = ADC_MAX * 0.5f;
+float hpf_y = 0.0f;
+float hpf_x_prev = 0.0f;
+float env = 0.0f;
+
+// "resting" noise floor and recent peak for normalization
+float floorEnv = 40.0f;
+float peakEnv  = 200.0f;
+
+uint32_t t0_ms;
+uint32_t next_us;
+
+static inline int clampi(int v, int lo, int hi) {
+  if (v < lo) return lo;
+  if (v > hi) return hi;
+  return v;
+}
+
+// median-of-3 for spike removal (great for motion/cable pops)
+static inline int median3(int a, int b, int c) {
+  return max(min(a,b), min(max(a,b), c));
+}
+
+void setup() {
+  Serial.begin(115200);
+
+#if defined(ARDUINO_ARCH_RENESAS)
+  analogReadResolution(12);        // 0..4095
+#endif
+
+  t0_ms = millis();
+  next_us = micros();
+}
+
+void loop() {
+  // fixed-rate sampling
+  uint32_t now = micros();
+  if ((int32_t)(now - next_us) < 0) return;
+  next_us += SAMPLE_US;
+
+  int raw = analogRead(EMG_PIN);
+
+  // ---- Calibration phase: baseline + initial noise estimate ----
+  if (millis() - t0_ms < CAL_MS) {
+    baseline = 0.99f * baseline + 0.01f * raw;
+
+    // Keep output quiet during calibration
+    Serial.println(0);
+    return;
+  }
+
+  // ---- 1) High-pass around baseline (remove drift / motion) ----
+  float x = (float)raw - baseline;
+  hpf_y = HPF_ALPHA * (hpf_y + x - hpf_x_prev);
+  hpf_x_prev = x;
+
+  // ---- 2) Rectify + envelope smoothing ----
+  float rect = fabs(hpf_y);
+  env = ENV_ALPHA * env + (1.0f - ENV_ALPHA) * rect;
+
+  // ---- 3) Adaptive floor (rest noise) ----
+  // Only let floor follow when signal is not too active
+  if (env < floorEnv * 1.6f) {
+    floorEnv = FLOOR_ALPHA * floorEnv + (1.0f - FLOOR_ALPHA) * env;
+  }
+
+  // ---- 4) Adaptive peak (for normalization) ----
+  if (env > peakEnv) peakEnv = env;
+  else peakEnv *= PEAK_DECAY;
+
+  // Ensure peak is above floor by a margin, preventing division issues
+  if (peakEnv < floorEnv + 25.0f) peakEnv = floorEnv + 25.0f;
+
+  // ---- 5) Normalize to 0..5000 ----
+  float norm = (env - floorEnv) / (peakEnv - floorEnv); // 0..1-ish
+  int out = (int)(norm * 5000.0f);
+  out = clampi(out, 0, 5000);
+
+  // ---- 6) Noise gate (suppress tiny jitter) ----
+  if (out < GATE_0_5000) out = 0;
+
+  // ---- 7) Median filter to kill spikes ----
+  static int p0=0, p1=0, p2=0;
+  p0 = p1; p1 = p2; p2 = out;
+  int out_med = median3(p0, p1, p2);
+
+  // ✅ ONLY ONE LINE OUTPUT
+  Serial.println(out_med);
+}

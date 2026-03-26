@@ -1,0 +1,227 @@
+# =====================
+# 0) 安装库
+# =====================
+!pip -q install umap-learn plotly
+
+# =====================
+# 1) 导入库
+# =====================
+import numpy as np
+import pandas as pd
+import plotly.express as px
+
+from sklearn.preprocessing import RobustScaler
+from sklearn.decomposition import PCA
+import umap.umap_ as umap
+
+# =====================
+# 2) 读取文件
+# =====================
+# 你已经 upload 过文件，所以直接写文件名即可
+file_path = "EMG_010.csv"
+df = pd.read_csv(file_path)
+
+# 清理列名
+df.columns = df.columns.str.strip()
+
+print("列名：", list(df.columns))
+print("数据量：", df.shape)
+
+# =====================
+# 3) 检查必要列
+# =====================
+required_cols = ["itH", "itMin", "itS", "millis", "raw", "filtered", "envelope"]
+for c in required_cols:
+    if c not in df.columns:
+        raise ValueError(f"缺少必要列: {c}")
+
+# =====================
+# 4) 构造连续时间并排序
+# =====================
+df["t_clock"] = (
+    df["itH"].astype(float) * 3600 +
+    df["itMin"].astype(float) * 60 +
+    df["itS"].astype(float) +
+    df["millis"].astype(float) / 1000.0
+)
+
+df = df.sort_values(["t_clock", "millis"]).reset_index(drop=True)
+
+# =====================
+# 5) 清洗 EMG 数值列
+# =====================
+emg_base_cols = ["raw", "filtered", "envelope"]
+
+for col in emg_base_cols:
+    df[col] = pd.to_numeric(df[col], errors="coerce")
+    df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+    df[col] = df[col].fillna(df[col].median())
+
+    # 裁剪极端值，减少离群点影响
+    lo, hi = df[col].quantile([0.01, 0.99])
+    df[col] = df[col].clip(lo, hi)
+
+# =====================
+# 6) rolling 动态特征
+# =====================
+win = 50   # 可改成 25 / 50 / 100
+
+for col in emg_base_cols:
+    df[f"{col}_mean"] = df[col].rolling(win, min_periods=1).mean()
+    df[f"{col}_std"] = df[col].rolling(win, min_periods=1).std().fillna(0)
+    df[f"{col}_diff"] = df[col].diff().fillna(0)
+    df[f"{col}_absdiff_mean"] = df[f"{col}_diff"].abs().rolling(win, min_periods=1).mean()
+
+# =====================
+# 7) 可选加入 GPS / speed / detect
+# =====================
+extra_cols = []
+for c in ["lat", "lng", "speed_mph", "detect"]:
+    if c in df.columns:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
+        df[c] = df[c].replace([np.inf, -np.inf], np.nan)
+        df[c] = df[c].fillna(df[c].median())
+        extra_cols.append(c)
+
+# =====================
+# 8) 组装 UMAP 特征
+# =====================
+feature_cols = [
+    "raw", "filtered", "envelope",
+    "raw_mean", "raw_std", "raw_diff", "raw_absdiff_mean",
+    "filtered_mean", "filtered_std", "filtered_diff", "filtered_absdiff_mean",
+    "envelope_mean", "envelope_std", "envelope_diff", "envelope_absdiff_mean",
+] + extra_cols
+
+X = df[feature_cols].replace([np.inf, -np.inf], np.nan).fillna(0)
+
+print("用于 UMAP 的特征列：")
+print(feature_cols)
+
+# =====================
+# 9) 标准化 + PCA + 3D UMAP
+# =====================
+X_scaled = RobustScaler().fit_transform(X)
+
+n_pca = min(10, X_scaled.shape[1])
+X_pca = PCA(n_components=n_pca, random_state=42).fit_transform(X_scaled)
+
+n_neighbors = min(50, max(10, len(df) // 200))
+
+reducer = umap.UMAP(
+    n_components=3,
+    n_neighbors=n_neighbors,
+    min_dist=0.15,
+    metric="cosine",
+    random_state=42
+)
+
+emb = reducer.fit_transform(X_pca)
+
+df["umap_1"] = emb[:, 0]
+df["umap_2"] = emb[:, 1]
+df["umap_3"] = emb[:, 2]
+
+print("UMAP 完成。")
+
+# =====================
+# 10) 提取 memory point（高 envelope 点）
+# =====================
+threshold = df["envelope"].quantile(0.95)
+df["memory_point"] = df["envelope"] >= threshold
+
+print("memory point 阈值：", threshold)
+print("memory point 数量：", df["memory_point"].sum())
+
+# =====================
+# 11) 降采样（不然 3D 动画太卡）
+# =====================
+step = 80   # 可改：50 更细，150 更流畅
+df_plot = df.iloc[::step].copy().reset_index(drop=True)
+
+print("动画使用的数据量：", df_plot.shape)
+
+# =====================
+# 12) 构造动画帧（累积显示）
+# =====================
+n_frames = 80  # 可改
+
+df_plot["frame_id"] = pd.qcut(
+    np.arange(len(df_plot)),
+    q=min(n_frames, len(df_plot)),
+    labels=False,
+    duplicates="drop"
+)
+
+frame_time = df_plot.groupby("frame_id")["t_clock"].mean().reset_index()
+frame_time["frame_label"] = frame_time["t_clock"].apply(
+    lambda x: f"{int(x//3600):02d}:{int((x%3600)//60):02d}:{int(x%60):02d}"
+)
+
+df_plot = df_plot.merge(
+    frame_time[["frame_id", "frame_label"]],
+    on="frame_id",
+    how="left"
+)
+
+# 累积动画数据
+dfs = []
+for i in sorted(df_plot["frame_id"].dropna().unique()):
+    temp = df_plot[df_plot["frame_id"] <= i].copy()
+    temp["anim_frame"] = frame_time.loc[
+        frame_time["frame_id"] == i, "frame_label"
+    ].values[0]
+    dfs.append(temp)
+
+df_anim = pd.concat(dfs, ignore_index=True)
+
+# =====================
+# 13) 3D 动态 UMAP
+# =====================
+fig = px.scatter_3d(
+    df_anim,
+    x="umap_1",
+    y="umap_2",
+    z="umap_3",
+    color="envelope",
+    animation_frame="anim_frame",
+    symbol="memory_point",
+    hover_data={
+        "t_clock": True,
+        "raw": True,
+        "filtered": True,
+        "envelope": True,
+        "memory_point": True,
+        "lat": True if "lat" in df_anim.columns else False,
+        "lng": True if "lng" in df_anim.columns else False,
+        "speed_mph": True if "speed_mph" in df_anim.columns else False,
+    },
+    opacity=0.75,
+    title="3D Dynamic UMAP of EMG_010"
+)
+
+fig.update_traces(marker=dict(size=3))
+
+fig.update_layout(
+    scene=dict(
+        xaxis_title="UMAP 1",
+        yaxis_title="UMAP 2",
+        zaxis_title="UMAP 3"
+    ),
+    width=1100,
+    height=850
+)
+
+fig.show()
+
+# =====================
+# 14) 保存结果
+# =====================
+out_html = "EMG_010_umap_3d_dynamic.html"
+fig.write_html(out_html)
+
+out_csv = "EMG_010_umap_3d_embedding.csv"
+df.to_csv(out_csv, index=False, encoding="utf-8-sig")
+
+print("已保存 HTML：", out_html)
+print("已保存 CSV：", out_csv)
